@@ -33,29 +33,52 @@
         }
         .menu-btn { padding: 15px 40px; margin: 10px; font-size: 1.2rem; cursor: pointer; background: #cc5500; color: white; border: none; border-radius: 8px; font-weight: bold; }
 
-        /* --- UI --- */
+        /* --- UI LAYOUT --- */
         .player-ui { position: absolute; display: none; flex-direction: column; gap: 5px; z-index: 1000; width: 320px; transition: opacity 0.3s; }
         .player-ui.inactive { opacity: 0.2; pointer-events: none; filter: grayscale(1); }
+        
+        /* Positioning with vertical gaps between 1/3 and 2/4 */
         #ui-0 { top: 10px; left: 10px; align-items: flex-start; }
         #ui-1 { top: 10px; right: 10px; align-items: flex-end; }
-        #ui-2 { bottom: 120px; left: 10px; align-items: flex-start; }
-        #ui-3 { bottom: 120px; right: 10px; align-items: flex-end; }
+        #ui-2 { top: 480px; left: 10px; align-items: flex-start; } /* Vertical Gap created here */
+        #ui-3 { top: 480px; right: 10px; align-items: flex-end; }
 
         .player-box { width: 140px; height: 35px; border: 3px solid white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; text-transform: uppercase; margin-bottom: 5px;}
-        
-        /* Mission Rows with Colors */
         .secret-card-display { font-size: 0.75rem; background: #222; padding: 8px; border: 2px solid gold; border-radius: 5px; margin-bottom: 5px; line-height: 1.4; color: #fff; width: 180px; }
         .mission-row { display: flex; justify-content: space-between; padding: 3px 8px; margin: 2px 0; border-radius: 4px; font-weight: bold; text-shadow: 1px 1px 2px black; border: 1px solid rgba(255,255,255,0.1); }
-
         .card-dock { display: flex; gap: 4px; padding: 5px; border-radius: 8px; background: rgba(255,255,255,0.05); min-height: 65px; }
         .card { width: 40px; height: 60px; border-radius: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; font-size: 7px; font-weight: bold; color: white; border: 2px solid white; transition: 0.3s; text-align: center;}
         .card.selected { outline: 4px solid gold; transform: scale(1.1); box-shadow: 0 0 15px gold; }
 
+        /* --- BOARD & BRIDGE --- */
         .game-board { position: relative; width: 550px; height: 850px; background: linear-gradient(to bottom, #1b5e20 20%, #4caf50 40%, #fbc02d 70%, #0288d1 100%); border: 12px solid #261405; border-radius: 15px; margin-top: 50px; }
         .bridge { position: absolute; left: 50%; transform: translateX(-50%); width: 85px; height: 80%; bottom: 0; display: flex; flex-direction: column; background: #4e342e; border: 4px solid #261405; z-index: 5; }
-        .slot { position: relative; flex: 1; border-bottom: 2px solid #261405; display: flex; justify-content: center; align-items: center; }
-        .tiki-piece { width: 34px; height: 42px; border-radius: 4px; border: 1px solid #000; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 7px; font-weight: bold; color: white; text-shadow: 1px 1px 1px black; }
         
+        .slot { position: relative; flex: 1; border-bottom: 2px solid #261405; display: flex; justify-content: center; align-items: center; }
+        
+        /* Slot Numbering 1-9 */
+        .slot::before { 
+            content: attr(data-rank); 
+            position: absolute; left: -25px; 
+            color: rgba(255,255,255,0.6); font-weight: bold; font-size: 14px; 
+        }
+
+        /* Fire Effects for top 3 */
+        .fire-orb {
+            position: absolute; width: 18px; height: 18px; border-radius: 50%;
+            background: radial-gradient(circle, #fff700, #ff8c00, #ff0000);
+            box-shadow: 0 0 12px #ff4500, 0 0 20px #ff0000;
+            animation: flicker 0.6s infinite alternate;
+            z-index: 10;
+        }
+        .fire-l { left: -45px; }
+        .fire-r { right: -45px; }
+        @keyframes flicker {
+            from { transform: scale(1); opacity: 0.7; }
+            to { transform: scale(1.25); opacity: 1; }
+        }
+
+        .tiki-piece { width: 34px; height: 42px; border-radius: 4px; border: 1px solid #000; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 7px; font-weight: bold; color: white; text-shadow: 1px 1px 1px black; }
         .step { position: absolute; width: 50px; height: 40px; background: #cfd8dc; border-radius: 40% 60% 50% 45%; display: flex; justify-content: center; align-items: center; color: #263238; font-weight: bold; font-size: 11px; z-index: 6; }
         .piece { width: 18px; height: 18px; border-radius: 50%; border: 2px solid white; transition: all 0.5s; margin: 1px; }
 
@@ -138,6 +161,14 @@
             for(let i=1; i<=9; i++) {
                 const s = document.createElement('div');
                 s.className = 'slot'; s.dataset.rank = i;
+                
+                // Add Fire Orbs for Top 3 slots
+                if(i <= 3) {
+                    const fl = document.createElement('div'); fl.className = 'fire-orb fire-l';
+                    const fr = document.createElement('div'); fr.className = 'fire-orb fire-r';
+                    s.appendChild(fl); s.appendChild(fr);
+                }
+                
                 b.appendChild(s);
             }
         }
@@ -183,7 +214,10 @@
                 t.onclick = () => handleAction(t);
                 document.getElementById('yard').appendChild(t);
             });
-            document.querySelectorAll('.slot').forEach(s => { if(s.querySelector('.tiki-piece')) s.querySelector('.tiki-piece').remove(); });
+            document.querySelectorAll('.slot').forEach(s => { 
+                const existing = s.querySelector('.tiki-piece');
+                if(existing) existing.remove(); 
+            });
             
             for(let i=0; i<totalPlayers; i++) {
                 let shuf = [...tikiData].sort(() => Math.random() - 0.5);
@@ -251,7 +285,8 @@
             }
 
             slots.forEach((s, i) => {
-                s.innerHTML = '';
+                const oldTiki = s.querySelector('.tiki-piece');
+                if(oldTiki) oldTiki.remove();
                 if(bridgeTikis[i]) s.appendChild(bridgeTikis[i]);
             });
 
@@ -275,8 +310,6 @@
 
         function runCPUTurn() {
             if(!isRoundActive) return;
-            
-            // Phase 1: Setup
             if(isSetupPhase) {
                 const yardTikis = document.getElementById('yard').querySelectorAll('.tiki-piece');
                 if(yardTikis.length > 0) {
@@ -285,20 +318,15 @@
                 }
                 return;
             }
-
-            // Phase 2: Playing Cards
             const dock = document.getElementById(`dock-${currentTurn}`);
             const cards = dock.querySelectorAll('.card');
             if(cards.length > 0) {
                 const randomCard = cards[Math.floor(Math.random() * cards.length)];
-                // Find card def
                 const type = randomCard.innerText.includes("UP") ? "up" : randomCard.innerText.includes("TOPPLE") ? "topple" : "toast";
                 const val = randomCard.innerText.split("\n")[1];
-                
                 selectedCard = randomCard;
                 selectedCard.dataset.type = type;
                 selectedCard.dataset.val = val;
-
                 const bridgeTikis = document.querySelectorAll('.bridge .tiki-piece');
                 const randomTiki = bridgeTikis[Math.floor(Math.random() * bridgeTikis.length)];
                 setTimeout(() => handleAction(randomTiki), 800);
@@ -310,7 +338,6 @@
             const slots = document.querySelectorAll('.slot');
             const top3 = [ slots[0].querySelector('.tiki-piece')?.dataset.name, slots[1].querySelector('.tiki-piece')?.dataset.name, slots[2].querySelector('.tiki-piece')?.dataset.name ];
             let summary = "";
-
             for(let i=0; i<totalPlayers; i++) {
                 let pts = 0;
                 if(top3[0] === playerMissions[i][0].n) pts += 9;
